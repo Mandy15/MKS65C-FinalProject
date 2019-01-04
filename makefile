@@ -1,11 +1,11 @@
-all: word_association.o
-	gcc -o word_association word_association.o
+all: taboo.o
+	gcc -o taboo taboo.o
 
-word_association.o: word_association.c word_association.h
-	gcc -c word_association.c
+taboo.o: taboo.c taboo.h
+	gcc -c taboo.c
 
 clean:
-	rm word_association *.o
+	rm taboo *.o
 
 run:
-	./word_association
+	./taboo

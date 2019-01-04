@@ -3,9 +3,7 @@
 
 void setup(){
   clear();
-  printf("                  TABOO!!!                  \n\n");
-  sleep(1);
-  // clear();
+  printf("                                   TABOO!!!\n\n");
 }
 
 char * read_line(){
@@ -26,12 +24,12 @@ int main(){
   char *input = malloc(64*sizeof(char));
 
   setup();
-  printf("Join game? (y/n)          ");
+  printf("Join game? (y/n) ");
   input = read_line();
   if(strcmp(input,"y") == 0){
-    while(1){
+    // while(1){
       printf("lol\n");
-    }
+    // }
   }else{
     printf("OK, goodbye.\n");
   }

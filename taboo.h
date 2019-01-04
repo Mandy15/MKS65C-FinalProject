@@ -8,8 +8,6 @@
 #include <sys/wait.h>
 #include <errno.h>
 
-int guess();
+void setup();
 
-int hint();
-
-int check();
+char * readline();
