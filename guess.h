@@ -8,8 +8,8 @@
 #include <sys/wait.h>
 #include <errno.h>
 
-guess();
+int guess();
 
-check();
+int check();
 
-g_points();
+int g_points();

@@ -28,7 +28,7 @@ int main(){
   input = read_line();
   if(strcmp(input,"y") == 0){
     // while(1){
-      printf("lol\n");
+      printf("lol\n");  //connect to network here, but idk what to do with server/client
     // }
   }else{
     printf("OK, goodbye.\n");

@@ -1,15 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <errno.h>
+#include "hinter.h"
 
-word();
+int word(){
+  return 0;
+}
 
-taboo();
+int taboo(){
+  return 0;
+}
 
-h_points();
+int h_points(){
+  return 0;
+}
