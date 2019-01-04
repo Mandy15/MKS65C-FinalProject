@@ -3,7 +3,7 @@
 
 void setup(){
   clear();
-  printf("                  WELCOME TO MANDY'S TABOO!!!                  \n\n");
+  printf("                  TABOO!!!                  \n\n");
   sleep(1);
   // clear();
 }
