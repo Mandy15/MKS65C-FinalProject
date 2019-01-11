@@ -1,38 +1,6 @@
-#include "taboo.h"
-#define clear() printf("\033[H\033[J")
-
-void setup(){
-  clear();
-  printf("                                   TABOO!!!\n\n");
-}
-
-char * read_line(){
-  char *buf = malloc(64*sizeof(char));
-  fgets(buf, 64, stdin);
-  if(strlen(buf) != 0){
-    int len = strlen(buf);
-    if(buf[len-1] == '\n'){
-      buf[len-1] = '\0';
-    }
-    return buf;
-  }else{
-    return NULL;
-  }
-}
+#include "networking.h"
 
 int main(){
-  char *input = malloc(64*sizeof(char));
-
-  setup();
-  printf("Join game? (y/n) ");
-  input = read_line();
-  if(strcmp(input,"y") == 0){
-    // while(1){
-      printf("lol\n");  //connect to network here, but idk what to do with server/client
-    // }
-  }else{
-    printf("OK, goodbye.\n");
-  }
 
   return 0;
 }

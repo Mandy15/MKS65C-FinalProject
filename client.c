@@ -1,30 +1,60 @@
-#include "pipe_networking.h"
+#include "networking.h"
+#define clear() printf("\033[H\033[J")
 
-static void sighandler(int signo){
-  if(signo == SIGINT){
-    printf("\nClient has exited.\n");
-    exit(0);
+void setup(){
+  clear();
+  printf("                                  T A B O O\n\n");
+}
+
+char * read_line(){
+  char *buf = malloc(64*sizeof(char));
+  fgets(buf, 64, stdin);
+  if(strlen(buf) != 0){
+    int len = strlen(buf);
+    if(buf[len-1] == '\n'){
+      buf[len-1] = '\0';
+    }
+    return buf;
+  }else{
+    return NULL;
   }
 }
 
-int main() {
-  signal(SIGINT, sighandler);
+int main(int argc, char **argv) {
+  char *input = malloc(64*sizeof(char));
 
-  int to_server;
-  int from_server;
+  setup();
+  printf("Join game? (y/n) ");
+  input = read_line();
+  if(strcmp(input,"y") == 0){
+    int server_socket;
+    char buffer[BUFFER_SIZE];
+    int points = 0;
 
-  from_server = client_handshake( &to_server );
+    if (argc == 2){
+      server_socket = client_setup( argv[1]);
+    }else{
+      server_socket = client_setup( TEST_IP );
+    }
 
-  char buf[BUFFER_SIZE];
-  while(1){
-    printf("Enter input to send to server: ");
-    fgets(buf, BUFFER_SIZE, stdin);
-    buf[strlen(buf)-1] = '\0';
-    write(to_server, buf, BUFFER_SIZE);
+    printf("enter username: ");
+    char *buf = malloc(64*sizeof(char));
+    fgets(buf, 64, stdin);
+    buf = strsep( &buf, "\n" );
 
-    read(from_server, buf, BUFFER_SIZE);
-    printf("Client has received message from server...\n");
-    printf("\"%s\"\n", buf);
+    while (1) {
+      printf("%s: %d\nenter guess: ",buf, points);
+      fgets(buffer, sizeof(buffer), stdin);
+      *strchr(buffer, '\n') = 0;
+      write(server_socket, buffer, sizeof(buffer));
+      read(server_socket, buffer, sizeof(buffer));
+      printf("[%s]\n", buffer);
+      if(strcmp(buffer,"correct") == 0){
+        points++;
+      }
+    }
+  }else{
+    printf("OK, goodbye.\n");
   }
   return 0;
 }
