@@ -7,7 +7,7 @@ A game of taboo where 5 players connect to the game server in multiple terminals
 ## To Start Game:
 1. open 6 terminals
 2. make and ./server in one
-3. ./client in the other 5 (entering y and username as you go)
+3. ./client in the other 5 (entering y and username as per the instructions in each client)
 
 ## DEVLOG
 ###### Jan 2
@@ -15,6 +15,7 @@ Created the necessary files and came up with a networking diagram of the program
 ###### Jan 4
 Moved over networking and socket-related files posted by Mr. K. Modified to fit the format of my idea.
 ###### Jan 11
-Got the server to state whether the client guessed right or wrong and give points if correct.
+Got the server to state whether the client guessed right or wrong and give points if correct (from a set of words in server).
 ###### Jan 15
 Clients wait until there are five players before starting the game.
+Have to get server to establish turns and assign the hinter.INCOMPLETE

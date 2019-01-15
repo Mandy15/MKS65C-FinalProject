@@ -11,7 +11,7 @@ void subserver(int from_client);
 // };
 char *answers[6] = {"tump", "notionate", "rewild", "nugacity", "interloper" , "applesauce",
 };
-char *tablist[6] = {"a small mound, hill, or rise of ground",
+char *hints[6] = {"a small mound, hill, or rise of ground",
                     "strong-willed or stubborn",
                     "to return (land) to a more natural state",
                     "triviality; insignificance",
@@ -35,7 +35,7 @@ char * process(char * s) {
   }
 }
 
-// void turns(){
+// void role(){
 //   int fd = open("clients.txt", O_RDONLY);
 //   char * buf = malloc(6);
 //   // onesec = clock()+(60*CLOCKS_PER_SEC);
