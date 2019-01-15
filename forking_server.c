@@ -46,7 +46,7 @@ int wait_players(){
   int fd = open("clients.txt", O_RDONLY);
   char * buf = malloc(30);
   if(read(fd, buf, 30) == 30){
-    close(fd);
+    // close(fd);
     return 0;
   }
   close(fd);
@@ -83,24 +83,22 @@ int main() {
 
 void subserver(int client_socket) {
   char buffer[BUFFER_SIZE];
-  char wait[BUFFER_SIZE];
+  char *wait = malloc(300*sizeof(char));
 
   add_client(getpid());
-  int i = wait_players();
-  while(i){
-    strcpy(wait,"Waiting for other players...");
-    write(client_socket, wait, sizeof(wait));
-    i = wait_players();
-  }
-
-  strcpy(wait,"START");
+  wait = "Waiting for other players...";
   write(client_socket, wait, sizeof(wait));
+  while(wait_players()){
+  }
+  wait = "START";
+  write(client_socket, wait, sizeof(wait));
+
   while (read(client_socket, buffer, sizeof(buffer))) {
 
     printf("[subserver %d] received: [%s]\n", getpid(), buffer);
     char * buf = process(buffer);
     write(client_socket, buf, sizeof(buf));
-  }//end read loop
+  }
   close(client_socket);
   exit(0);
 }

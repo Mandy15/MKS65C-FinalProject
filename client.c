@@ -42,6 +42,14 @@ int main(int argc, char **argv) {
     fgets(buf, 64, stdin);
     buf = strsep( &buf, "\n" );
 
+    char *buf2 = malloc(300*sizeof(char));
+    read(server_socket, buf2, sizeof(buf));
+    printf("%s\n", buf2);
+    while(strcmp(buf2, "START") != 0){
+      read(server_socket, buf2, sizeof(buf));
+    }
+    printf("%s\n", buf2);
+
     while (1) {
       printf("%s: %d\nenter guess: ",buf, points);
       fgets(buffer, sizeof(buffer), stdin);
