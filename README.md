@@ -10,3 +10,11 @@ A game of taboo where 5 players connect to the game server in multiple terminals
 3. ./client in the other 5 (entering y and username as you go)
 
 ## DEVLOG
+###### Jan 2
+Created the necessary files and came up with a networking diagram of the program to start working from.
+###### Jan 4
+Moved over networking and socket-related files posted by Mr. K. Modified to fit the format of my idea.
+###### Jan 11
+Got the server to state whether the client guessed right or wrong and give points if correct.
+###### Jan 15
+Clients wait until there are five players before starting the game.
