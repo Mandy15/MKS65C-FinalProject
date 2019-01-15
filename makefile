@@ -28,7 +28,9 @@ networking.o: networking.c networking.h
 	gcc -c networking.c
 
 clean:
-	rm *.o
+	rm *.o clients.txt
+
+# truncate -s 0 "clients.txt"
 
 run:
 	./client
