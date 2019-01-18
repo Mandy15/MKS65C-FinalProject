@@ -33,7 +33,6 @@ static void sighandler(int signo) {
 
 void setup(char * ip){
   int i,j;
-  srand(time(NULL));
   signal(SIGINT, sighandler);
   rounds = 0;
 
@@ -226,6 +225,7 @@ void start(){
 }
 
 int main(int argc, char* argv[]){
+  srand(time(NULL));
   if(argc == 2){
     setup(argv[1]);
   }else{

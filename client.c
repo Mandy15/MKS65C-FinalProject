@@ -183,13 +183,12 @@ void start(){
 }
 
 int main(int argc, char* argv[]){
-  clear();
-  printf("                                  T A B O O\n\n");
   if(argc == 2){
     setup(argv[1]);
   }else{
     setup(TEST_IP);
   }
+  printf("                                  T A B O O\n\n");
   start();
 
   return 0;

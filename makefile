@@ -1,4 +1,4 @@
-forking: client server
+all: client server
 
 server: server.o networking.o
 	gcc -o server server.o networking.o
