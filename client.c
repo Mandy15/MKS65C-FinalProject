@@ -31,6 +31,7 @@ void setup(char * ip){
   usernames = calloc(sizeof(char*), MAX_PLAYERS);
   points = calloc(sizeof(int), MAX_PLAYERS);
   corrects = calloc(sizeof(int), MAX_PLAYERS-1);
+  tlist = calloc(sizeof(char*), 4);
   for (i = 0; i < MAX_PLAYERS; i++) {
     points[i] = 0;
   }
@@ -63,90 +64,92 @@ void roles() {
   char* response = calloc(sizeof(char), 2);
   read(server, response, 2);
   hinter = atoi(response);
-  printf("%s is the hinter.\n", usernames[hinter]);
+  if(player == hinter){
+    printf("You are the hinter.\n");
+  }else{
+    printf("%s is the hinter.\n", usernames[hinter]);
+  }
 }
 
 void receive_words(){
-  char buffer[BUFFER_SIZE];
+  char * buffer = calloc(sizeof(char), 64);
   read(server, buffer, sizeof(buffer));
   word = buffer;
-  for(int i = 0; i < 3; i++){
-    char buf[BUFFER_SIZE];
+  printf("Word: %s\nTaboo List:\n", word);
+  for(int i = 0; i < 4; i++){
+    char * buf = calloc(sizeof(char), 64);
     read(server, buf, sizeof(buf));
     tlist[i] = buf;
+    printf("%s\n", tlist[i]);
   }
-  printf("Word: %s\nTaboo Words: %s, %s, %s", word, tlist[0], tlist[1], tlist[2]);
 }
 
 void give_hint(){
-  char buffer[11];
-  printf("Enter hint (limit of 10 characters): ");
-  fgets(buffer, sizeof(buffer), stdin);
-  *strchr(buffer, '\n') = 0;
-  write(server, buffer, sizeof(buffer));
-  printf("[HINT]%s: %s", usernames[hinter], buffer);
+  printf("Enter hint (limit of 20 characters): ");
+  char * buf = calloc(sizeof(char), 21);
+  fgets(buf, 21, stdin);
+  buf = strsep( &buf, "\n" );
+  // printf("[HINT]%s: %s\n", usernames[hinter], buf);
+  write(server, buf, sizeof(buf));
 }
 
-void checked_hint(){
+int checked_hint(){
   char buffer[BUFFER_SIZE];
   read(server, buffer, sizeof(buffer));
   if(strcmp(buffer, "X") == 0){
-    printf("Invalid hint. Send a different one.\n");
-    give_hint();
+    printf("Invalid hint. Skipped turn.\n");
+    return 1;
   }
+  return 0;
 }
 
 //GUESSER
 void receive_hint(){
-  char buffer[BUFFER_SIZE];
+  char * buffer = calloc(sizeof(char), 20);
   read(server, buffer, sizeof(buffer));
-  printf("[HINT]%s: %s", usernames[hinter], buffer);
+  printf("[HINT]%s: %s\n", usernames[hinter], buffer);
 }
 
 void guess(){
-  char buffer[BUFFER_SIZE];
+  char * buffer = calloc(sizeof(char), 64);
   printf("Enter guess: ");
   fgets(buffer, sizeof(buffer), stdin);
-  *strchr(buffer, '\n') = 0;
+  *strchr(buffer, '\n') = '\0';
   write(server, buffer, sizeof(buffer));
 }
 
 void display(){
-  for(int i = 0; i < MAX_PLAYERS; i++){
-    if(i != hinter){
-      char buffer[BUFFER_SIZE];
-      read(server, buffer, sizeof(buffer));
-      printf("[GUESS]%s: %s", usernames[i], buffer);
+  for(int i = 0; i < MAX_PLAYERS-1; i++){
+    char * buffer = calloc(sizeof(char), 64);
+    read(server, buffer, sizeof(buffer));
+    if(i == hinter){
+      continue;
     }
+    printf("%s: %s\n", usernames[i], buffer);
   }
 }
 
 void correct_guessers(){
-  char * response = calloc(sizeof(char), 2);
-  read(server, response, 2);
-  int c = atoi(response);
-  for(int i = 0; i < MAX_PLAYERS-1; i++){
-    char * c_num = calloc(sizeof(char), 2);
-    read(server, c_num, 2);
-    corrects[i] = atoi(c_num);;
+  char * buffer = calloc(sizeof(char), 2);
+  read(server, buffer, 2);
+  int c = atoi(buffer);
+  for(int i = 0; i < c; i++){
+    char* buffer = calloc(sizeof(char), 2);
+    read(server, buffer, 2);
+    corrects[i] = atoi(buffer);
   }
-  if(c == 0){
-    printf("No one guessed [%s] correctly. New round.\n", word);
-    return;
+  int index = 0;
+  for(int i = 0; i < c; i++){
+    if(i != hinter){
+      printf("%s guessed correctly!\n", usernames[corrects[index]]);
+      points[corrects[index]] += 1;
+      index++;
+    }
   }
-  points[hinter] += c;
-  int j = 0;
-  while(c > 0){
-    printf("%s ", usernames[corrects[j]]);
-    points[corrects[j]]++;
-    j++;
-    c--;
-  }
-  printf("guessed [%s] correctly!\n", word);
 }
 
 //WINNER
-void end(){
+void end_round(){
   int winner;
   char * w = calloc(sizeof(char), 2);
   read(server, w, 2);
@@ -171,14 +174,21 @@ void start(){
     if(player == hinter){
       receive_words();
       give_hint();
-      checked_hint();
+      if(checked_hint()){
+        continue;
+        continue;
+      }
     }else{
       receive_hint();
       guess();
     }
     display();
     correct_guessers();
-    end();
+    end_round();
+    int i;
+    for (i = 0; i < MAX_PLAYERS; i++) {
+      printf("%s: %d\n", usernames[i], points[i]);
+    }
   }
 }
 
@@ -190,6 +200,4 @@ int main(int argc, char* argv[]){
   }
   printf("                                  T A B O O\n\n");
   start();
-
-  return 0;
 }

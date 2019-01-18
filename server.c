@@ -3,25 +3,20 @@
 #define MAX_PLAYERS 5
 #define MAX_POINTS 10
 
-struct tab{
-  char answer[20];
-  char * tabo[3];
-};
-char * keys[6] = {"cat", "window", "Mr. K", "chair", "door" , "Stuyvesant"
+char * keys[6] = {"cat", "window", "Mr. K", "chair", "door" , "Stuy"
                   };
-char * values[6][3] = { {"feline","kitty","tabby"}, {"glass","wall","look"},
-                        {"teacher","systems","konstantinovich"},
-                        {"seat","butt","sit"}, {"entrance","doorway","exit"}, {"school","here","hell"},
+char * values[6][4] = { {"cat","feline","kitty","tabby"}, {"window","glass","wall","look"},
+                        {"Mr. K","teacher","systems","computer"},
+                        {"chair","seat","butt","sit"}, {"door","entrance","doorway","exit"}, {"Stuy","school","here","hell"},
                     };
 
-struct tab hint;
+struct taboo hint;
 char ** usernames;
 int * clients;
 int * points;
 char ** guesses;
 int hinter;
 int next_hinter;
-int rounds;
 int * corrects;
 
 static void sighandler(int signo) {
@@ -34,7 +29,6 @@ static void sighandler(int signo) {
 void setup(char * ip){
   int i,j;
   signal(SIGINT, sighandler);
-  rounds = 0;
 
   clear();
   clients = calloc(sizeof(int), MAX_PLAYERS);
@@ -79,8 +73,8 @@ void setup(char * ip){
 
 //HINTER
 void roles() {
-  hinter = rounds % MAX_PLAYERS;
-  char* h = calloc(sizeof(char), 2);
+  hinter = (hinter+1) % MAX_PLAYERS;
+  char * h = calloc(sizeof(char), 2);
   sprintf(h, "%d", hinter);
   for (int i = 0; i < MAX_PLAYERS; i++) {
     write(clients[i], h, 2);
@@ -91,39 +85,40 @@ void roles() {
 void random_word(){
   int i = rand() % 6;
   strcpy(hint.answer, keys[i]);
-  for(int x = 0; x < 3; x++){
+  for(int x = 0; x < 4; x++){
     hint.tabo[x] = values[i][x];
   }
 }
 
 void send_word(){
+  random_word();
   char * buffer = calloc(sizeof(char), 64);
   buffer = hint.answer;
+  printf("buffer: %s\n", buffer);
   write(clients[hinter], buffer, sizeof(buffer));
-  for(int i = 0; i < 3; i++){
+  for(int i = 0; i < 4; i++){
     char * buf = calloc(sizeof(char), 64);
     buf = hint.tabo[i];
+    printf("buf: %s\n", buf);
     write(clients[hinter], buf, sizeof(buf));
   }
 }
 
 int receive_hint(){
-  char * buffer = calloc(sizeof(char), 64);
+  char * buffer = calloc(sizeof(char), 20);
   read(clients[hinter], buffer, sizeof(buffer));
-  char * buf = calloc(sizeof(char), 10);
-  buf = strsep( &buffer, " " );
-  for(int i = 0; i < 10; i++){
-    for(int j = 0; j < 3; j++){
-      if(strcmp(hint.tabo[j], &buf[i]) == 0){
-        char * buf1 = calloc(sizeof(char), 2);
-        buf1 = "X";
-        write(clients[hinter], buf1, sizeof(buf1));
-        return 1;
-      }
+  for(int i = 0; i < 4; i++){
+    if(strstr(buffer, hint.tabo[i])){
+      char * buf1 = calloc(sizeof(char), 2);
+      buf1 = "X";
+      write(clients[hinter], buf1, sizeof(buf1));
+      return 1;
     }
   }
-  for (int i = 0; i < MAX_PLAYERS-1; i++) {
-    if(i != hinter){
+  for (int i = 0; i < MAX_PLAYERS; i++) {
+    if(i == hinter){
+      write(clients[hinter], buffer, sizeof(buffer));
+    }else{
       write(clients[i], buffer, sizeof(buffer));
     }
   }
@@ -132,13 +127,20 @@ int receive_hint(){
 
 //GUESSER
 void get_guesses(){
-  int index = 0;
+  int x = 0;
   for(int i = 0; i < MAX_PLAYERS; i++){
     if(i != hinter){
-      char buffer[BUFFER_SIZE];
+      char * buffer = calloc(sizeof(char), 64);
       read(clients[i], buffer, sizeof(buffer));
-      guesses[index] = buffer;
-      index++;
+      guesses[x] = buffer;
+      x++;
+    }
+  }
+  x = 0;
+  for(int i = 0; i < MAX_PLAYERS; i++){
+    if(i != hinter){
+      printf("%s: %s\n", usernames[i], guesses[x]);
+      x++;
     }
   }
   for(int i = 0; i < MAX_PLAYERS; i++){
@@ -151,9 +153,8 @@ void get_guesses(){
 }
 
 void correct_guesser(){
-  char buffer[BUFFER_SIZE];
+  char * buffer = calloc(sizeof(char), 64);
   int index = 0;
-  int turn = 0;
   int c = 0;
   for(int i = 0; i < MAX_PLAYERS; i++){
     if(i != hinter){
@@ -162,19 +163,14 @@ void correct_guesser(){
         corrects[c] = i;
         index++;
         c++;
-        turn = 1;
       }
     }
   }
   points[hinter] += c;
-  rounds += turn;
+  sprintf(buffer, "%d", c);
   for(int i = 0; i < MAX_PLAYERS; i++){
-    char* c_num = calloc(sizeof(char), 2);
-    sprintf(c_num, "%d", c);
-    write(clients[i], c_num, 2);
-  }
-  for(int i = 0; i < MAX_PLAYERS; i++){
-    for(int j = 0; j < MAX_PLAYERS-1; j++){
+    write(clients[i], buffer, 2);
+    for(int j = 0; j < c; j++){
       char* c_num = calloc(sizeof(char), 2);
       sprintf(c_num, "%d", corrects[j]);
       write(clients[i], c_num, 2);
@@ -183,8 +179,8 @@ void correct_guesser(){
 }
 
 //WINNER
-void end(){
-  int winner = 0;
+void end_round(){
+  int winner = -1;
   int i;
   for(i = 0; i < MAX_PLAYERS; i++){
     if(points[winner] < points[i]){
@@ -196,27 +192,28 @@ void end(){
       char * w = calloc(sizeof(char), 2);
       sprintf(w, "%d", winner);
       write(clients[i], w, 2);
+      printf("Game finished.\n");
+      exit(EXIT_SUCCESS);
     }
   }else{
+    winner = -1;
     char * w = calloc(sizeof(char), 2);
-    sprintf(w, "%d", -1);
+    sprintf(w, "%d", winner);
     write(clients[i], w, 2);
-    return;
   }
-
-  printf("Game finished.\n");
-  exit(EXIT_SUCCESS);
 }
 
 void start(){
   while(1){
     roles();
-    random_word();
     send_word();
-    while(receive_hint());
+    if(receive_hint()==1){
+      continue;
+      continue;
+    }
     get_guesses();
     correct_guesser();
-    end();
+    end_round();
     int i;
     for (i = 0; i < MAX_PLAYERS; i++) {
       printf("%s: %d\n", usernames[i], points[i]);
@@ -225,13 +222,11 @@ void start(){
 }
 
 int main(int argc, char* argv[]){
-  srand(time(NULL));
   if(argc == 2){
     setup(argv[1]);
   }else{
     setup(NULL);
   }
+  srand(time(NULL));
   start();
-
-  return 0;
 }
