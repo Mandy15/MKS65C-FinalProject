@@ -97,6 +97,7 @@ int client_setup(char * server) {
   hints->ai_family = AF_INET;  //IPv4
   hints->ai_socktype = SOCK_STREAM;  //TCP socket
   getaddrinfo(server, PORT, hints, &results);
+  printf("Client IP address: %s\n", server);
 
   //connect to the server
   //connect will bind the socket for us

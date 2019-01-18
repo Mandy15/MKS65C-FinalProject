@@ -1,68 +1,196 @@
 #include "networking.h"
 #define clear() printf("\033[H\033[J")
+#define MAX_PLAYERS 5
 
-void setup(){
-  clear();
-  printf("                                  T A B O O\n\n");
-}
+int server;
+char ** usernames;
+int * points;
+int player;
+int hinter;
+char * word;
+char ** tlist;
+int * corrects;
 
-char * read_line(){
-  char *buf = malloc(64*sizeof(char));
-  fgets(buf, 64, stdin);
-  if(strlen(buf) != 0){
-    int len = strlen(buf);
-    if(buf[len-1] == '\n'){
-      buf[len-1] = '\0';
+char * read_line(char * line){
+  fgets(line, 64, stdin);
+  if(strlen(line) != 0){
+    int len = strlen(line);
+    if(line[len-1] == '\n'){
+      line[len-1] = '\0';
     }
-    return buf;
+    return line;
   }else{
     return NULL;
   }
 }
 
-int main(int argc, char **argv) {
-  char *input = malloc(64*sizeof(char));
+void setup(char * ip){
+  int i;
+  clear();
 
-  setup();
-  printf("Join game? (y/n) ");
-  input = read_line();
-  if(strcmp(input,"y") == 0){
-    int server_socket;
-    char buffer[BUFFER_SIZE];
-    int points = 0;
+  usernames = calloc(sizeof(char*), MAX_PLAYERS);
+  points = calloc(sizeof(int), MAX_PLAYERS);
+  corrects = calloc(sizeof(int), MAX_PLAYERS-1);
+  for (i = 0; i < MAX_PLAYERS; i++) {
+    points[i] = 0;
+  }
 
-    if (argc == 2){
-      server_socket = client_setup( argv[1]);
-    }else{
-      server_socket = client_setup( TEST_IP );
+  server = client_setup(ip);
+  printf("Waiting for other players...\n");
+
+  char * id = calloc(sizeof(char), 2);
+  read(server, id, 2);
+  player = atoi(id);
+  free(id);
+
+  clear();
+  printf("Enter username: ");
+  char * buf = malloc(64*sizeof(char));
+  fgets(buf, 64, stdin);
+  buf = strsep( &buf, "\n" );
+  write(server, buf, 64);
+  free(buf);
+
+  for (i = 0; i < MAX_PLAYERS; i++) {
+    char * name = calloc(sizeof(char), 64);
+    read(server, name, 64);
+    usernames[i] = name;
+  }
+}
+
+//HINTER
+void roles() {
+  char* response = calloc(sizeof(char), 2);
+  read(server, response, 2);
+  hinter = atoi(response);
+  printf("%s is the hinter.\n", usernames[hinter]);
+}
+
+void receive_words(){
+  char buffer[BUFFER_SIZE];
+  read(server, buffer, sizeof(buffer));
+  word = buffer;
+  for(int i = 0; i < 3; i++){
+    char buf[BUFFER_SIZE];
+    read(server, buf, sizeof(buf));
+    tlist[i] = buf;
+  }
+  printf("Word: %s\nTaboo Words: %s, %s, %s", word, tlist[0], tlist[1], tlist[2]);
+}
+
+void give_hint(){
+  char buffer[11];
+  printf("Enter hint (limit of 10 characters): ");
+  fgets(buffer, sizeof(buffer), stdin);
+  *strchr(buffer, '\n') = 0;
+  write(server, buffer, sizeof(buffer));
+  printf("[HINT]%s: %s", usernames[hinter], buffer);
+}
+
+void checked_hint(){
+  char buffer[BUFFER_SIZE];
+  read(server, buffer, sizeof(buffer));
+  if(strcmp(buffer, "X") == 0){
+    printf("Invalid hint. Send a different one.\n");
+    give_hint();
+  }
+}
+
+//GUESSER
+void receive_hint(){
+  char buffer[BUFFER_SIZE];
+  read(server, buffer, sizeof(buffer));
+  printf("[HINT]%s: %s", usernames[hinter], buffer);
+}
+
+void guess(){
+  char buffer[BUFFER_SIZE];
+  printf("Enter guess: ");
+  fgets(buffer, sizeof(buffer), stdin);
+  *strchr(buffer, '\n') = 0;
+  write(server, buffer, sizeof(buffer));
+}
+
+void display(){
+  for(int i = 0; i < MAX_PLAYERS; i++){
+    if(i != hinter){
+      char buffer[BUFFER_SIZE];
+      read(server, buffer, sizeof(buffer));
+      printf("[GUESS]%s: %s", usernames[i], buffer);
     }
+  }
+}
 
-    printf("enter username: ");
-    char *buf = malloc(64*sizeof(char));
-    fgets(buf, 64, stdin);
-    buf = strsep( &buf, "\n" );
+void correct_guessers(){
+  char * response = calloc(sizeof(char), 2);
+  read(server, response, 2);
+  int c = atoi(response);
+  for(int i = 0; i < MAX_PLAYERS-1; i++){
+    char * c_num = calloc(sizeof(char), 2);
+    read(server, c_num, 2);
+    corrects[i] = atoi(c_num);;
+  }
+  if(c == 0){
+    printf("No one guessed [%s] correctly. New round.\n", word);
+    return;
+  }
+  points[hinter] += c;
+  int j = 0;
+  while(c > 0){
+    printf("%s ", usernames[corrects[j]]);
+    points[corrects[j]]++;
+    j++;
+    c--;
+  }
+  printf("guessed [%s] correctly!\n", word);
+}
 
-    char *buf2 = malloc(300*sizeof(char));
-    read(server_socket, buf2, sizeof(buf));
-    printf("%s\n", buf2);
-    while(strcmp(buf2, "START") != 0){
-      read(server_socket, buf2, sizeof(buf));
-    }
-    printf("%s\n", buf2);
-
-    while (1) {
-      printf("%s: %d\nenter guess: ",buf, points);
-      fgets(buffer, sizeof(buffer), stdin);
-      *strchr(buffer, '\n') = 0;
-      write(server_socket, buffer, sizeof(buffer));
-      read(server_socket, buffer, sizeof(buffer));
-      printf("[%s]\n", buffer);
-      if(strcmp(buffer,"correct") == 0){
-        points++;
+//WINNER
+void end(){
+  int winner;
+  char * w = calloc(sizeof(char), 2);
+  read(server, w, 2);
+  winner = atoi(w);
+  free(w);
+  if(winner != -1){
+    clear();
+    printf("Game Over\n");
+    printf("WINNER: %s - %d points\n", usernames[winner], points[winner]);
+    for(int i = 0; i < MAX_PLAYERS; i++){
+      if(i != winner){
+        printf("%s - %d points\n", usernames[i], points[i]);
       }
     }
-  }else{
-    printf("OK, goodbye.\n");
+    exit(EXIT_SUCCESS);
   }
+}
+
+void start(){
+  while(1){
+    roles();
+    if(player == hinter){
+      receive_words();
+      give_hint();
+      checked_hint();
+    }else{
+      receive_hint();
+      guess();
+    }
+    display();
+    correct_guessers();
+    end();
+  }
+}
+
+int main(int argc, char* argv[]){
+  clear();
+  printf("                                  T A B O O\n\n");
+  if(argc == 2){
+    setup(argv[1]);
+  }else{
+    setup(TEST_IP);
+  }
+  start();
+
   return 0;
 }
