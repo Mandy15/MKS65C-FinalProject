@@ -19,5 +19,5 @@ Got the server to state whether the client guessed right or wrong and give point
 ###### Jan 15
 Clients wait until there are five players before starting the game.
 Have to get server to establish turns and assign the hinter.INCOMPLETE
-
 ###### Jan 18
+Changed original idea to make the exchanging between the hinter and guessers less complicated.
