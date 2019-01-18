@@ -21,3 +21,4 @@ Clients wait until there are five players before starting the game.
 Have to get server to establish turns and assign the hinter.INCOMPLETE
 ###### Jan 18
 Changed original idea to make the exchanging between the hinter and guessers less complicated. Code seems fine, but possible loading/time issue? Something wrong at sending hinter the taboo words.
+Works to an extent but still very buggy: ending game prematurely and starting a new round.
